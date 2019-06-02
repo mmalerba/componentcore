@@ -6,15 +6,16 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import {
-  ConcreteOrAbstractConstructor,
   AffectedByRtl,
   CanBeDisabled,
-  CanBeFocused,
+  CanBeFocused, CanBeSelected,
+  ConcreteOrAbstractConstructor,
   Constructor,
   HasActiveDescendant,
   HasId,
   HasItems,
-  HasKeySchemes, HasLifecycle,
+  HasKeySchemes,
+  HasLifecycle,
   HasOrientation,
   HasSelectedDescendant,
 } from '../behaviors/behavior-interfaces';
@@ -22,7 +23,8 @@ import {
   createMixinBase,
   mixinActiveDescendant,
   mixinBidi,
-  mixinDisabled, mixinLifecycle,
+  mixinDisabled,
+  mixinLifecycle,
   mixinOrientation,
   mixinSelectedDescendant,
   mixinUniqueId,
@@ -89,4 +91,41 @@ export function mixinListbox<T extends ConcreteOrAbstractConstructor>(base?: T):
     mixinDisabled(
     mixinUniqueId(
     createMixinBase<T, ListboxStub>(base)))))))));
+}
+
+const defaultListboxMixins = {
+  hasId: mixinUniqueId,
+  canBeDisabled: mixinDisabled,
+  hasLifecycle: mixinLifecycle,
+  hasOrientation: mixinOrientation,
+  affectedByRtl: mixinBidi,
+  hasActiveDescendant: mixinActiveDescendant,
+  hasSelectedDescendant: mixinSelectedDescendant,
+};
+
+export function mixinListbox2<T extends ConcreteOrAbstractConstructor>(
+    base?: T,
+    // Long-hand type also works, but `typeof defaultListboxMixins` is way easier
+    mixins?: Partial<typeof defaultListboxMixins> /*Partial<{
+      hasId: <T extends Constructor>(c: T) => Constructor<HasId> & T,
+      canBeDisabled: <T extends Constructor>(c: T) => Constructor<CanBeDisabled> & T,
+      hasLifecycle: <T extends Constructor>(c: T) => Constructor<HasLifecycle> & T,
+      hasOrientation: <T extends Constructor>(c: T) => Constructor<HasOrientation> & T,
+      affectedByRtl: <T extends Constructor>(c: T) => Constructor<AffectedByRtl> & T,
+      hasActiveDescendant: <T extends Constructor<HasItems<D>>, D extends HasId & CanBeDisabled>(c: T) =>
+          Constructor<HasActiveDescendant<D>> & T,
+      hasSelectedDescendant: <T extends Constructor<HasItems<D> & HasActiveDescendant<D>>,
+          D extends HasId & CanBeDisabled & CanBeSelected>(c: T) => Constructor<HasSelectedDescendant<D>> & T
+    }>*/
+): Constructor<ListboxPattern> & T {
+  const m = {...defaultListboxMixins, ...mixins};
+  return mixinListboxKeyScheme(
+      m.hasSelectedDescendant(
+      m.hasActiveDescendant(
+      m.affectedByRtl(
+      m.hasOrientation(
+      m.hasLifecycle(
+      m.canBeDisabled(
+      m.hasId(
+      createMixinBase<T, ListboxStub>(base)))))))));
 }

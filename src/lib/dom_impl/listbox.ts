@@ -1,6 +1,7 @@
-import {mixinListbox} from '../patterns/listbox';
+import {mixinListbox, mixinListbox2} from '../patterns/listbox';
 import {mixinOption, OptionPattern} from '../patterns/option';
 import {mixinDomFocus, mixinDomKeyHandling} from './dom_common';
+import {Constructor, HasId} from "../behaviors/behavior-interfaces";
 
 
 // TODO: figure out a way to get rid of optionMap. Usually this mapping is something inherent
@@ -9,6 +10,11 @@ import {mixinDomFocus, mixinDomKeyHandling} from './dom_common';
 /** Map of option DOM elements to the corresponding behavior class. */
 const optionMap = new WeakMap<Element, OptionDom>();
 
+export function mixinCoolId<T extends Constructor>(base: T): Constructor<HasId> & T {
+  return class extends base implements HasId {
+    id = `my-cool-id`;
+  };
+}
 
 /**
  * Vanilla DOM implementation of the `listbox` pattern.
@@ -16,7 +22,7 @@ const optionMap = new WeakMap<Element, OptionDom>();
  * By extending `mixinListbox()`, we only need to implement the abstract members from
  * `ListboxStub`, which represent the bits that are framework-specific.
  */
-export class ListboxDom extends mixinDomKeyHandling(mixinDomFocus(mixinListbox())) {
+export class ListboxDom extends mixinDomKeyHandling(mixinDomFocus(mixinListbox2(undefined, {hasId: mixinCoolId}))) {
   private readonly optionObserver: MutationObserver =
       new MutationObserver(() => this.updateOptions());
 
@@ -28,6 +34,8 @@ export class ListboxDom extends mixinDomKeyHandling(mixinDomFocus(mixinListbox()
 
   setup() {
     super.setup();
+    // TODO(mmalerba): This overwrites the existing ID which isn't good, but ignoring `this.id` is also not good
+    this.hostElement.id = this.id;
     this.hostElement.setAttribute('role', 'listbox');
     this.updateOptions();
 
